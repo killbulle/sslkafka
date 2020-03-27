@@ -5,16 +5,20 @@ date: March 27, 2020
 output: pdf_document
 ---
 
-#System level tuning for kafka
-* On your server in the etc/sysctl.conf file
-- vm.swappiness=1 (Default: 60)
-- vm.dirty_ratio=80 (Default: 20)
-- vm.dirty_background_ratio=5 (Default: 10)
+# System level tuning for kafka
 
-*TODO With more information we can tune the network 
+* On your server in the etc/sysctl.conf file
+- vm.swappiness=1 
+- vm.dirty_ratio=80
+- vm.dirty_background_ratio=5 
+  >this one could be less on large server with a lot of ram 
+
+ *Saving etc/sysctl.conf and with sysctl -p
+
+ *TODO With more information we can tune the network 
 https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/kafka_system_level_broker_tuning.html
  
- Saving etc/sysctl.conf with sysctl -p
+
 
 
 ### Additional reference for performance
@@ -28,7 +32,6 @@ https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/kafka_system_lev
 - Add  sysstat  package for your server
 -- https://www.thegeekstuff.com/2011/03/sar-examples/
 -- https://access.redhat.com/solutions/3511971
-* I recomand to move the samplint around 30 second and leave retention around 10 days mad
-
+* I recomand to move the samplint around 30 second and leave retention around 10 days maximun
 
 
