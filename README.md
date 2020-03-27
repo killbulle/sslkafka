@@ -208,3 +208,139 @@ ssl.client.auth=required
 ```
 >test
 >toto
+
+
+
+
+# SCRAM configuration for ACL
+
+[SASL config](https://medium.com/egen/securing-kafka-cluster-using-sasl-acl-and-ssl-dec15b439f9d)
+
+### Step 1 : Create the super user
+```
+./bin/kafka-configs.sh --zookeeper localhost:2181 --alter --add-config 'SCRAM-SHA-512=[password='admin-secret']'\n
+ --entity-type users --entity-name admin
+```
+
+#### Step2 : Create the  kafka_server_jaas.conf
+```
+KafkaServer {
+org.apache.kafka.common.security.scram.ScramLoginModule required
+username="admin"
+password="admin-secret";
+};
+```
+#### Step 3 : Create the kafka config client properties  in /config folder command)
+```
+security.protocol=SASL_SSL
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="demo-user" password="secret";
+ssl.truststore.location=
+<kafka-binary-dir>/config/truststore/kafka.truststore.jks
+ssl.truststore.password=password
+```
+
+#### Step 4: Configure the server properties
+```
+listeners=PLAINTEXT://localhost:9092,SASL_PLAINTEXT://localhost:9093,SASL_SSL://localhost:9094
+advertised.listeners=PLAINTEXT://localhost:9092,SASL_PLAINTEXT://localhost:9093,SASL_SSL://localhost:9094
+security.inter.broker.protocol=SASL_SSL
+#ssl.endpoint.identification.algorithm=
+ssl.client.auth=required
+sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+sasl.enabled.mechanisms=SCRAM-SHA-512
+# Broker security settings
+ssl.truststore.location=
+<kafka-binary-dir>/config/truststore/kafka.truststore.jks
+ssl.truststore.password=password
+ssl.keystore.location=
+<kafka-binary-dir>/config/keystore/kafka.keystore.jks
+ssl.keystore.password=password
+ssl.key.password=password
+# ACLs
+authorizer.class.name=kafka.security.auth.SimpleAclAuthorizer
+super.users=User:admin
+#zookeeper SASL
+zookeeper.set.acl=false
+########### SECURITY using SCRAM-SHA-512 and SSL ###################
+```
+
+#### Step 5 start the kafka with jaasconfig
+```
+export KAFKA_OPTS=-Djava.security.auth.login.config=<kafka-binary-dir>/config/kafka_server_jaas.conf
+./bin/kafka-server-start.sh ./config/server.properties
+```
+
+
+
+#### Step 6 : Create standard user
+```
+./bin/kafka-configs.sh --zookeeper localhost:2181 --alter --add-config 'SCRAM-SHA-512=[password='secret']' --entity-type users --entity-name demouser
+```
+
+
+#### Step 7: Creating Topic without Create Permissions:
+```
+./bin/kafka-topics.sh --create --bootstrap-server localhost:9094 --command-config ./config/ssl-user-config.properties --replication-factor 1 --partitions 1 --topic demo-topic
+```
+ > FAIL
+
+#### Step 8: Create permission for topic creation
+```
+./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 --add --allow-principal User:demouser --operation Create --operation Describe  --topic demo-topic
+
+```
+#### Step 9 : Create the topic
+```
+./bin/kafka-topics.sh --create --bootstrap-server localhost:9094 --command-config ./config/ssl-user-config.properties --replication-factor 1 --partitions 1 --topic demo-topic
+
+```
+
+#### Step 10: Create ssl-producer.properties in config folder
+```
+bootstrap.servers=localhost:9094
+compression.type=none
+### SECURITY ######
+security.protocol=SASL_SSL
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="demouser" password="secret";
+ssl.truststore.location=
+<kafka-binary-dir>/config/truststore/kafka.truststore.jks
+ssl.truststore.password=password
+
+```
+#### Step 11: Produce without right
+```
+./bin/kafka-console-producer.sh --broker-list localhost:9094 --topic demo-topic --producer.config config/ssl-producer.properties
+```
+>FAIL
+
+#### Step 12: Assign produce ACL
+```
+./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 --add --allow-principal User:demouser --producer --topic demo-topic
+```
+
+#### Step 13 create a consumer group configuration
+```
+bootstrap.servers=localhost:9094
+# consumer group id
+group.id=demo-consumer-group
+### SECURITY ######
+security.protocol=SASL_SSL
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="demouser" password="secret";
+ssl.truststore.location=
+<kafka-binary-dir>/config/truststore/kafka.truststore.jks
+ssl.truststore.password=password
+```
+
+
+#### Step 14: Fail to consume without ACL
+```
+./bin/kafka-console-consumer.sh --bootstrap-server localhost:9094 --topic demo-topic --from-beginning --consumer.config config/ssl-consumer.properties
+```
+
+#### Step 15: Add ACL consume configuration
+```
+./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 --add --allow-principal User:demouser --consumer --topic demo-topic --group demo-consumer-group
+```
