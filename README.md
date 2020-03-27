@@ -2,8 +2,8 @@
 title: SSL configuration
 author: Mgo
 date: March 27, 2020
-fontsize: 11pt
-geometry: margin=1in
+fontsize: 10pt
+geometry: margin=.3in
 documentclass: report
 output:
    pdf_document:
@@ -218,7 +218,8 @@ ssl.client.auth=required
 
 ### Step 1 : Create the super user
 ```
-./bin/kafka-configs.sh --zookeeper localhost:2181 --alter --add-config 'SCRAM-SHA-512=[password='admin-secret']'\n
+./bin/kafka-configs.sh --zookeeper localhost:2181 --alter \ 
+--add-config 'SCRAM-SHA-512=[password='admin-secret']' \ 
  --entity-type users --entity-name admin
 ```
 
@@ -234,7 +235,8 @@ password="admin-secret";
 ```
 security.protocol=SASL_SSL
 sasl.mechanism=SCRAM-SHA-512
-sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="demo-user" password="secret";
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule \
+required username="demo-user" password="secret";
 ssl.truststore.location=
 <kafka-binary-dir>/config/truststore/kafka.truststore.jks
 ssl.truststore.password=password
@@ -275,24 +277,31 @@ export KAFKA_OPTS=-Djava.security.auth.login.config=<kafka-binary-dir>/config/ka
 
 #### Step 6 : Create standard user
 ```
-./bin/kafka-configs.sh --zookeeper localhost:2181 --alter --add-config 'SCRAM-SHA-512=[password='secret']' --entity-type users --entity-name demouser
+./bin/kafka-configs.sh --zookeeper localhost:2181 --alter \
+--add-config 'SCRAM-SHA-512=[password='secret']' --entity-type users --entity-name demouser
 ```
 
 
 #### Step 7: Creating Topic without Create Permissions:
 ```
-./bin/kafka-topics.sh --create --bootstrap-server localhost:9094 --command-config ./config/ssl-user-config.properties --replication-factor 1 --partitions 1 --topic demo-topic
+./bin/kafka-topics.sh --create --bootstrap-server localhost:9094 \
+--command-config ./config/ssl-user-config.properties --replication-factor 1 \
+--partitions 1 --topic demo-topic
 ```
  > FAIL
 
 #### Step 8: Create permission for topic creation
 ```
-./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 --add --allow-principal User:demouser --operation Create --operation Describe  --topic demo-topic
+./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 \
+--add --allow-principal User:demouser --operation Create \
+ --operation Describe  --topic demo-topic
 
 ```
 #### Step 9 : Create the topic
 ```
-./bin/kafka-topics.sh --create --bootstrap-server localhost:9094 --command-config ./config/ssl-user-config.properties --replication-factor 1 --partitions 1 --topic demo-topic
+./bin/kafka-topics.sh --create --bootstrap-server localhost:9094 \
+--command-config ./config/ssl-user-config.properties --replication-factor 1\
+ --partitions 1 --topic demo-topic
 
 ```
 
@@ -311,16 +320,18 @@ ssl.truststore.password=password
 ```
 #### Step 11: Produce without right
 ```
-./bin/kafka-console-producer.sh --broker-list localhost:9094 --topic demo-topic --producer.config config/ssl-producer.properties
+./bin/kafka-console-producer.sh --broker-list localhost:9094 \
+--topic demo-topic --producer.config config/ssl-producer.properties
 ```
 >FAIL
 
 #### Step 12: Assign produce ACL
 ```
-./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 --add --allow-principal User:demouser --producer --topic demo-topic
+./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 \
+--add --allow-principal User:demouser --producer --topic demo-topic
 ```
 
-#### Step 13 create a consumer group configuration
+#### Step 13: Create a consumer group configuration
 ```
 bootstrap.servers=localhost:9094
 # consumer group id
@@ -337,10 +348,12 @@ ssl.truststore.password=password
 
 #### Step 14: Fail to consume without ACL
 ```
-./bin/kafka-console-consumer.sh --bootstrap-server localhost:9094 --topic demo-topic --from-beginning --consumer.config config/ssl-consumer.properties
+./bin/kafka-console-consumer.sh --bootstrap-server localhost:9094 \
+--topic demo-topic --from-beginning --consumer.config config/ssl-consumer.properties
 ```
 
 #### Step 15: Add ACL consume configuration
 ```
-./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 --add --allow-principal User:demouser --consumer --topic demo-topic --group demo-consumer-group
+./bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 \
+--add --allow-principal User:demouser --consumer --topic demo-topic --group demo-consumer-group
 ```
