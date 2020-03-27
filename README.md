@@ -92,9 +92,7 @@ openssl s_client -debug -connect broker_host_name:9093 -tls1
 * A tools for rolling restart
 [Yelp tools for rolling update](https://github.com/Yelp/kafka-utils) 
 
-#### Step 13 - A
-
-* Configuration without 2-ways authentification
+#### Step 13 Configuration without 2-ways authentification
 * import the root certificate in a client truststore
 ```
 keytool -keystore kafka.client.truststore.jks -alias CARoot -import -file  -file root.crt
@@ -108,15 +106,43 @@ ssl.truststore.location = <pathtostore>/kafka.client.truststore.jks
 ssl.truststore.password = <password>
 ```
 
+#### Step 13 (Optional) Configuration with 2-ways authentification
+__WARNING__  __ssl.client.auth=required is required in the server properties__
+
+* For 2-ways authentification we need a keystore for the client
+
+1. Create the client keystore:
+```
+keytool -keystore client.keystore.jks -alias localhost -validity 365 -genkey -keyalg RSA -ext SAN=DNS:fqdn_of_client_system
+```
+"first and last name?" is the FQDN of the system you will use to run the producer and/or consumer. 
+
+2. Export the client certificate so it can be signed: 
+```
+keytool -keystore client.keystore.jks -alias localhost -certreq -file client.unsigned.cert
+```
+
+3. Sign the client certificate with the root CA:
+```
+openssl x509 -req -CA root.crt -CAkey root.key -in client.unsigned.cert -out client.signed.cert \
+        -days 365 -CAcreateserial 
+```
+
+4. Add the root CA to keystore:
+```
+keytool -keystore client.keystore.jks -alias CARoot -import -file root.crt
+```
+5. Add the signed client certificate to the keystore:
+```
+keytool -keystore client.keystore.jks -alias localhost -import -file client.signed.cert
+```
+6.Copy the keystore to a location where you will use it.
+
+ For example, you could choose to copy it to the same directory where you copied the keystore for the Kafka broker. If you choose to copy it to some other location, or intend to use some other user to run the command-line clients, be sure to add a copy of the truststore file you created for the brokers. Clients can reuse this truststore file for authenticating the Kafka brokers because the same CA is used to sign all of the certificates. Also set the file's ownership and permissions accordingly.
 
 
-
-WARNING il faut alors activer le ssl.client.auth=required
-
-
-
-
-
+* Create a config file
+```
 security.protocol=SSL
 ssl.truststore.location=/<pathtostore>/kafka.truststore.jks
 ssl.truststore.password=<trustore_password>
@@ -125,17 +151,21 @@ ssl.keystore.password=<keystore_password>
 ssl.key.password=<key_password>
 ssl.enabled.protocols=TLSv1.2,TLSv1.1,TLSv1
 ssl.client.auth=required
+```
 
 
 
-
-#### Etape 14 test client
+#### Step 14 testing client
+```
 ~# cd /opt/kafka
 
-
 /opt/kafka# bin/kafka-console-producer.sh --broker-list kafka01.mycompany.com:9093  \                                       --topic test --producer.config config/client.properties
-
-
+```
+>test
+toto
+```
 /opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  --topic test \
                                           --consumer.config config/client.properties --from-beginning
-
+```
+>test
+toto
