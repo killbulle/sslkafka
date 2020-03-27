@@ -2,11 +2,16 @@
 #Création config SSL + SCRAM
 
 ## Various Links 
-[Doc apache](https://kafka.apache.org/090/documentation.html#security_overview)
-[Doc Confluent](https://docs.confluent.io/current/security/security_tutorial.html#security-tutorial)
-[Doc d'install vertica pour la mise en place SSL](https://www.vertica.com/docs/9.2.x/HTML/Content/Authoring/KafkaIntegrationGuide/TLS-SSL/KafkaTLS-SSLExamplePart3ConfigureKafka.htm)
-[Documentation procedure SASL](https://medium.com/egen/securing-kafka-cluster-using-sasl-acl-and-ssl-dec15b439f9d)
-[Firewall constraint](https://stackoverflow.com/questions/38531054/kafka-and-firewall-rules)
+* [Doc apache](https://kafka.apache.org/090/documentation.html#security_overview)
+
+* [Doc Confluent](https://docs.confluent.io/current/security/security_tutorial.html#security-tutorial)
+
+* [Doc d'install vertica pour la mise en place SSL](https://www.vertica.com/docs/9.2.x/HTML/Content/Authoring/KafkaIntegrationGuide/TLS-SSL/KafkaTLS-SSLExamplePart3ConfigureKafka.htm)
+
+* [Documentation procedure SASL](https://medium.com/egen/securing-kafka-cluster-using-sasl-acl-and-ssl-dec15b439f9d)
+
+
+* [Firewall constraint](https://stackoverflow.com/questions/38531054/kafka-and-firewall-rules)
 
 
 ## SSL root Certificate création
@@ -83,6 +88,10 @@ ssl.enabled.protocols=TLSv1.2,TLSv1.1,TLSv1
 If enabled it require client use a certificate for a two way auth
 Note also that if client use SCRAM it will ignore it
 
+## Repeat  step 2 - 11 For each broker
+
+
+
 #### Step 12: Kafka server restart
 
 Testing tls connection
@@ -92,7 +101,7 @@ openssl s_client -debug -connect broker_host_name:9093 -tls1
 * A tools for rolling restart
 [Yelp tools for rolling update](https://github.com/Yelp/kafka-utils) 
 
-#### Step 13 Configuration without 2-ways authentification
+#### Step 13 A Configuration without 2-ways authentification
 * import the root certificate in a client truststore
 ```
 keytool -keystore kafka.client.truststore.jks -alias CARoot -import -file  -file root.crt
@@ -106,7 +115,7 @@ ssl.truststore.location = <pathtostore>/kafka.client.truststore.jks
 ssl.truststore.password = <password>
 ```
 
-#### Step 13 (Optional) Configuration with 2-ways authentification
+#### Step 13 B (Optional and replace Step 13 A) Configuration with 2-ways authentification
 __WARNING__  __ssl.client.auth=required is required in the server properties__
 
 * For 2-ways authentification we need a keystore for the client
