@@ -5,11 +5,11 @@ date: March 27, 2020
 output: pdf_document
 ---
 
-##System level tuning for kafka
+#System level tuning for kafka
 * On your server in the etc/sysctl.conf file
-◦ vm.swappiness=1 (Default: 60)
-◦ vm.dirty_ratio=80 (Default: 20)
-◦ vm.dirty_background_ratio=5 (Default: 10)
+- vm.swappiness=1 (Default: 60)
+- vm.dirty_ratio=80 (Default: 20)
+- vm.dirty_background_ratio=5 (Default: 10)
 
 *TODO With more information we can tune the network 
 https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/kafka_system_level_broker_tuning.html
