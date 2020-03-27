@@ -168,13 +168,12 @@ ssl.client.auth=required
 ```
 ~# cd /opt/kafka
 
-/opt/kafka# bin/kafka-console-producer.sh --broker-list kafka01.mycompany.com:9093  \                                       --topic test --producer.config config/client.properties
+/opt/kafka# bin/kafka-console-producer.sh --broker-list kafka01.mycompany.com:9093  --topic test --producer.config config/client.properties
 ```
 >test
 toto
 ```
-/opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  --topic test \
-                                          --consumer.config config/client.properties --from-beginning
+/opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  --topic test --consumer.config config/client.properties --from-beginning
 ```
 >test
 toto
