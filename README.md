@@ -95,9 +95,11 @@ openssl s_client -debug -connect broker_host_name:9093 -tls1
 #### Step 13 - A
 
 * Configuration without 2-ways authentification
+* import the root certificate in a client truststore
 ```
 keytool -keystore kafka.client.truststore.jks -alias CARoot -import -file  -file root.crt
 ```
+
 * And on the client part we  create a config file
 
 ```
@@ -106,7 +108,7 @@ ssl.truststore.location = <pathtostore>/kafka.client.truststore.jks
 ssl.truststore.password = <password>
 ```
 
-Configuration client avec authent forte
+
 
 
 WARNING il faut alors activer le ssl.client.auth=required
