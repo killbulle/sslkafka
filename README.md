@@ -1,3 +1,15 @@
+---
+title: SSL configuration
+author: Mgo
+date: March 27, 2020
+fontsize: 11pt
+geometry: margin=1in
+documentclass: report
+output:
+   pdf_document:
+   toc: true 
+   toc_depth: 2      
+---
 
 #Création config SSL + SCRAM
 
@@ -16,13 +28,13 @@
 
 ## SSL root Certificate création
 
-  ####  Step 1 : Root Certificate création
+####  Step 1 : Root Certificate création
 
 ```	
 openssl req -new -x509 -keyout ca-key -out root.crt -days 365
 ```	
 	    
- #### Step  2 : Créate a __truststore__ for one spécific broker
+#### Step  2 : Créate a __truststore__ for one spécific broker
 ```
 keytool -keystore kafka.truststore.jks -alias CARoot -import -file root.crt
 ```
@@ -36,20 +48,28 @@ __ssl.endpoint.identification.algorithm=__
 _Note here the value for desactivating is blank_
 
 * For Kafka broker named kafka01
+  
+  >manual mode
 ```
-keytool -keystore kafka01.keystore.jks -alias localhost  -validity 365 -genkey -keyalg RSA -ext SAN=DNS:kafka01.mycompany.com
+keytool -keystore kafka01.keystore.jks -alias localhost  -validity 365 \n
+-genkey -keyalg RSA -ext SAN=DNS:kafka01.mycompany.com
 ```
-> Without user prompts, pass command line arguments
-keytool -keystore kafka.server.keystore.jks -alias localhost -keyalg RSA -validity {validity} -genkey -storepass {keystore-pass} -keypass {key-pass} -dname {distinguished-name} -ext SAN=DNS:{hostname}
-
+> Without user prompts, pass command line arguments (do not use if you do the manual mode)
+```
+keytool -keystore kafka.server.keystore.jks -alias localhost -keyalg RSA \
+-validity {validity}  -genkey -storepass {keystore-pass} -keypass {key-pass}\
+ -dname {distinguished-name}  -ext SAN=DNS:{hostname}
+```
 
 #### Step 4 : Export  broker certificate for signing with CA ROOT
 ```
-keytool -keystore kafka01.keystore.jks -alias localhost  -certreq -file kafka01.unsigned.crt
+keytool -keystore kafka01.keystore.jks -alias localhost \
+  -certreq -file kafka01.unsigned.crt
 ```
 #### Step 5 : Sign the broker certificate
 ```
-openssl x509 -req -CA root.crt -CAkey root.key -in kafka01.unsigned.crt -out kafka01.signed.crt -days 365 -CAcreateserial
+openssl x509 -req -CA root.crt -CAkey root.key -in kafka01.unsigned.crt \
+-out kafka01.signed.crt -days 365 -CAcreateserial
 ```
 #### Step 6 :import the root cetificate in the broker keystore
 ```
@@ -57,7 +77,8 @@ $ keytool -keystore kafka01.keystore.jks -alias CARoot -import -file root.crt
 ```
 #### Step 7 import signed cerficate CAroot in the keystore
 ```
-keytool -keystore kafka01.keystore.jks -alias localhost   -import -file kafka01.signed.crt
+keytool -keystore kafka01.keystore.jks -alias localhost  \
+ -import -file kafka01.signed.crt
 ```
 #### Step 8: Copy truststore et keystore vers les serveurs kafka
 >use your favorite tools scp or another
@@ -76,6 +97,8 @@ cd /opt/kafka/config/
 In the  server.properties file
 ```
 security.protocol=SSL
+listeners=SSL://:9093,SASL_SSL://:9094
+security.inter.broker.protocol=SSL
 ssl.truststore.location=/opt/kafka/config/kafka.truststore.jks
 ssl.truststore.password=trustore_password
 ssl.keystore.location=/opt/kafka/config/client.keystore.jks
@@ -122,7 +145,8 @@ __WARNING__  __ssl.client.auth=required is required in the server properties__
 
 1. Create the client keystore:
 ```
-keytool -keystore client.keystore.jks -alias localhost -validity 365 -genkey -keyalg RSA -ext SAN=DNS:fqdn_of_client_system
+keytool -keystore client.keystore.jks -alias localhost -validity 365 -genkey -keyalg RSA \
+ -ext SAN=DNS:fqdn_of_client_system
 ```
 "first and last name?" is the FQDN of the system you will use to run the producer and/or consumer. 
 
@@ -133,8 +157,8 @@ keytool -keystore client.keystore.jks -alias localhost -certreq -file client.uns
 
 3. Sign the client certificate with the root CA:
 ```
-openssl x509 -req -CA root.crt -CAkey root.key -in client.unsigned.cert -out client.signed.cert \
-        -days 365 -CAcreateserial 
+openssl x509 -req -CA root.crt -CAkey root.key -in client.unsigned.cert \ 
+-out client.signed.cert    -days 365 -CAcreateserial 
 ```
 
 4. Add the root CA to keystore:
@@ -147,7 +171,12 @@ keytool -keystore client.keystore.jks -alias localhost -import -file client.sign
 ```
 6. Copy the keystore to a location where you will use it.
 
- For example, you could choose to copy it to the same directory where you copied the keystore for the Kafka broker. If you choose to copy it to some other location, or intend to use some other user to run the command-line clients, be sure to add a copy of the truststore file you created for the brokers. Clients can reuse this truststore file for authenticating the Kafka brokers because the same CA is used to sign all of the certificates. Also set the file's ownership and permissions accordingly.
+ For example, you could choose to copy it to the same directory where you copied the keystore
+ for the Kafka broker. If you choose to copy it to some other location, or intend to use some 
+ other user to run the command-line clients, be sure to add a copy of the truststore file 
+ you created for the brokers. Clients can reuse this truststore file for authenticating 
+ the Kafka brokers because the same CA is used to sign all of the certificates.
+  Also set the file's ownership and permissions accordingly.
 
 
 * Create a config file
@@ -168,12 +197,14 @@ ssl.client.auth=required
 ```
 ~# cd /opt/kafka
 
-/opt/kafka# bin/kafka-console-producer.sh --broker-list kafka01.mycompany.com:9093  --topic test --producer.config config/client.properties
+/opt/kafka# bin/kafka-console-producer.sh --broker-list kafka01.mycompany.com:9093 \
+ --topic test --producer.config config/client.properties
 ```
 >test
 >toto
 ```
-/opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  --topic test  --consumer.config config/client.properties --from-beginning
+/opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  \
+--topic test  --consumer.config config/client.properties --from-beginning
 ```
 >test
 >toto
