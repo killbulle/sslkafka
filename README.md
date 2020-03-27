@@ -6,7 +6,7 @@
 
 * [Doc Confluent](https://docs.confluent.io/current/security/security_tutorial.html#security-tutorial)
 
-* [Doc d'install vertica pour la mise en place SSL](https://www.vertica.com/docs/9.2.x/HTML/Content/Authoring/KafkaIntegrationGuide/TLS-SSL/KafkaTLS-SSLExamplePart3ConfigureKafka.htm)
+* Vastly Inspired form [Doc d'install vertica pour la mise en place SSL](https://www.vertica.com/docs/9.2.x/HTML/Content/Authoring/KafkaIntegrationGuide/TLS-SSL/KafkaTLS-SSLExamplePart3ConfigureKafka.htm)
 
 * [Documentation procedure SASL](https://medium.com/egen/securing-kafka-cluster-using-sasl-acl-and-ssl-dec15b439f9d)
 
@@ -145,7 +145,7 @@ keytool -keystore client.keystore.jks -alias CARoot -import -file root.crt
 ```
 keytool -keystore client.keystore.jks -alias localhost -import -file client.signed.cert
 ```
-6.Copy the keystore to a location where you will use it.
+6. Copy the keystore to a location where you will use it.
 
  For example, you could choose to copy it to the same directory where you copied the keystore for the Kafka broker. If you choose to copy it to some other location, or intend to use some other user to run the command-line clients, be sure to add a copy of the truststore file you created for the brokers. Clients can reuse this truststore file for authenticating the Kafka brokers because the same CA is used to sign all of the certificates. Also set the file's ownership and permissions accordingly.
 
@@ -171,9 +171,9 @@ ssl.client.auth=required
 /opt/kafka# bin/kafka-console-producer.sh --broker-list kafka01.mycompany.com:9093  --topic test --producer.config config/client.properties
 ```
 >test
-toto
+>toto
 ```
-/opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  --topic test --consumer.config config/client.properties --from-beginning
+/opt/kafka# bin/kafka-console-consumer.sh --bootstrap-server kafaka01.mycompany.com:9093  --topic test  --consumer.config config/client.properties --from-beginning
 ```
 >test
-toto
+>toto
