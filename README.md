@@ -236,7 +236,7 @@ password="admin-secret";
 security.protocol=SASL_SSL
 sasl.mechanism=SCRAM-SHA-512
 sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule \
-required username="demo-user" password="secret";
+required username="demouser" password="secret";
 ssl.truststore.location=
 <kafka-binary-dir>/config/truststore/kafka.truststore.jks
 ssl.truststore.password=password
